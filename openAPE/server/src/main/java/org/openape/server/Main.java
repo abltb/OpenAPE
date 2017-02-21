@@ -10,6 +10,7 @@ import org.openape.server.rest.SuperRestInterface;
  * Starting class of the project. Creates REST APIs.
  */
 public class Main {
+// static Logger l = LoggerFactory.getLogger(LogBackExample.class);
     public static void main(String[] args) {
         // Start rest api and database connection.
         DatabaseConnection.getInstance();

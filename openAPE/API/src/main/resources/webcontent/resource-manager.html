@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>openAPE</title>
+    <script src="jquery-3.1.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#saveJSONbutton').click(function () {
+                var json = [],
+                	resource = document.getElementById('resourceFile');
+                $('tbody tr').each(function () {
+                    var data = {},
+                        $td = $(this).find('td input'),
+                        name = $td.eq(0).val(),
+                        value = $td.eq(1).val();
+                    data[name] = value;
+                    json.push(data);
+                });
+                alert(resource);
+                alert(JSON.stringify(json));
+            })
+        })
+
+    </script>
+</head>
+<body>
+<table>
+    <thead>
+        <tr>
+            <td>Key</td>
+            <td>Value</td>
+        </tr>
+        <tr>
+            <td>File:</td>
+            <td><input type="file" id="resourceFile"></td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+        </tr>
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+        </tr>
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+        </tr>
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+        </tr>
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+        </tr>
+    </tbody>
+</table>
+<button type="button" id="saveJSONbutton">Speichern</button>
+</body>
+</html>
