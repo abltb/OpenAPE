@@ -6,6 +6,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.Messages;
+import org.openape.server.Main;
 import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
 import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.ListingRequestHandler;
@@ -13,12 +14,14 @@ import org.openape.server.requestHandler.ResourceDescriptionRequestHandler;
 import org.openape.server.requestHandler.ResourceRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import spark.Request;
 import spark.Spark;
 
 public class SuperRestInterface {
-
+	static Logger logger = LoggerFactory.getLogger(SuperRestInterface.class	);
     public static final int HTTP_STATUS_OK = 200;
     public static final int HTTP_STATUS_CREATED = 201;
     public static final int HTTP_STATUS_NO_CONTENT = 204;
@@ -54,7 +57,9 @@ public class SuperRestInterface {
          * test request to test if the server runs. Invoke locally using:
          * http://localhost:4567/hello if started from main.
          */
-        Spark.get(
+    	logger.info("Setting up REST API");	
+        Spark.get("api", (req,res) -> new API()                                                                    );
+    	Spark.get(
                 Messages.getString("UserContextRESTInterface.HelloWorldURL"), (req, res) -> Messages.getString("UserContextRESTInterface.HelloWorld")); //$NON-NLS-1$ //$NON-NLS-2$
 
         EnvironmentContextRESTInterface
@@ -68,6 +73,7 @@ public class SuperRestInterface {
         ResourceRESTInterface.setupResourceRESTInterface(new ResourceRequestHandler());
         TaskContextRESTInterface.setupTaskContextRESTInterface(new TaskContextRequestHandler());
         UserContextRESTInterface.setupUserContextRESTInterface(new UserContextRequestHandler());
+        logger.info("REST API successfully set up");
     }
 
 }

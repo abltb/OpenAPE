@@ -15,6 +15,8 @@ import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
 import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
@@ -33,10 +35,11 @@ import com.mongodb.client.MongoDatabase;
  * {@link UserContextRequestHandler}.
  */
 public class DatabaseConnection {
+	Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
     /**
      * The url to our mongo database server.
      */
-    private static final String DATABASEURL = Messages
+	    private static final String DATABASEURL = Messages
             .getString("DatabaseConnection.MongoDBServerAddress"); // TODO replace by //$NON-NLS-1$
     // the mongoDB url.
     /**
@@ -131,6 +134,10 @@ public class DatabaseConnection {
 
         // Get a reference to the openAPE database.
         this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
+        logger.info("Connection to database at " + DatabaseConnection.DATABASEURL + ":" +
+                DatabaseConnection.DATABASEPORT + "successfuly established"     );
+        
+        
         // Get references to the database collections.
         this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
                 .toString());

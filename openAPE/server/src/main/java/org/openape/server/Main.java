@@ -7,13 +7,16 @@ import org.openape.api.usercontext.UserContext;
 import org.openape.server.database.mongoDB.DatabaseConnection;
 import org.openape.server.database.resources.ResourceList;
 import org.openape.server.rest.SuperRestInterface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Starting class of the project. Creates REST APIs.
  */
 public class Main {
-// static Logger l = LoggerFactory.getLogger(LogBackExample.class);
+	 static Logger logger = LoggerFactory.getLogger(Main.class	);
     public static void main(String[] args) {
+    	logger.info("Starting openAPE application");
         // Start rest api and database connection.
         DatabaseConnection.getInstance();
         try {
