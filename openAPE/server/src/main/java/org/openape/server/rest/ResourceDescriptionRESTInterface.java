@@ -6,6 +6,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.Messages;
+import org.openape.api.listing.Listing;
 import org.openape.api.resourceDescription.ResourceDescription;
 import org.openape.server.requestHandler.ResourceDescriptionRequestHandler;
 
@@ -24,7 +25,7 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                         // resource description
                         // object.
                 final ResourceDescription recievedResourceDescription = (ResourceDescription) SuperRestInterface
-                        .extractContentFromRequest(req, ResourceDescription.class);
+                        .extractObjectFromRequest(req, ResourceDescription.class);
                 // Test the object for validity.
                 if (!recievedResourceDescription.isValid()) {
                     res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
@@ -80,8 +81,34 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
          */
         Spark.get(
                 Messages.getString("ResourceDescriptionRESTInterface.ResourceDescriptionFromListingURL"), (req, res) -> { //$NON-NLS-1$
-                    // TODO implement
-                    return Messages.getString("ResourceDescriptionRESTInterface.EmptyString"); //$NON-NLS-1$
+
+                    // Currently not used parameter.
+                    // final String index = req.params(":index");
+                    final String listingId = req.params(Messages
+                            .getString("ResourceDescriptionRESTInterface.listingIDParam")); //$NON-NLS-1$
+
+                    try {
+                        // get listing from id.
+                        final Listing listing = requestHandler.getListingById(listingId);
+                        // get resource description from listing. If no listing
+                        // is found an exception will be thrown.
+                        final ResourceDescription resourceDescription = listing
+                                .getResourceDescriptionQurey();
+                        // json map the resource description, set return status
+                        // and mime type and return the resource description.
+                        final ObjectMapper mapper = new ObjectMapper();
+                        final String jsonData = mapper.writeValueAsString(resourceDescription);
+                        res.status(SuperRestInterface.HTTP_STATUS_OK);
+                        res.type(Messages
+                                .getString("ResourceDescriptionRESTInterface.jsonMimeType"));//$NON-NLS-1$
+                        return jsonData;
+                    } catch (final IllegalArgumentException e) {
+                        res.status(SuperRestInterface.HTTP_STATUS_NOT_FOUND);
+                        return e.getMessage();
+                    } catch (final IOException e) {
+                        res.status(SuperRestInterface.HTTP_STATUS_INTERNAL_SERVER_ERROR);
+                        return e.getMessage();
+                    }
                 });
 
         /**
@@ -94,7 +121,7 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                             .getString("ResourceDescriptionRESTInterface.IDParam")); //$NON-NLS-1$
                     try {
                         final ResourceDescription recievedResourceDescription = (ResourceDescription) SuperRestInterface
-                                .extractContentFromRequest(req, ResourceDescription.class);
+                                .extractObjectFromRequest(req, ResourceDescription.class);
                         // Test the object for validity.
                         if (!recievedResourceDescription.isValid()) {
                             res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);

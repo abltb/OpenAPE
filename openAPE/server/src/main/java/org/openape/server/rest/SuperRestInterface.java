@@ -41,7 +41,7 @@ public class SuperRestInterface {
      * @throws JsonParseException
      * @throws JsonMappingException
      */
-    protected static <T> Object extractContentFromRequest(Request req, Class<T> objectType)
+    protected static <T> Object extractObjectFromRequest(Request req, Class<T> objectType)
             throws IOException, JsonParseException, JsonMappingException {
         final ObjectMapper mapper = new ObjectMapper();
         final Object recievedObject = mapper.readValue(req.body(), objectType);
@@ -57,10 +57,15 @@ public class SuperRestInterface {
          * test request to test if the server runs. Invoke locally using:
          * http://localhost:4567/hello if started from main.
          */
+
     	logger.info("Setting up REST API");	
         Spark.get("api", (req,res) -> new API()                                                                    );
     	Spark.get(
                 Messages.getString("UserContextRESTInterface.HelloWorldURL"), (req, res) -> Messages.getString("UserContextRESTInterface.HelloWorld")); //$NON-NLS-1$ //$NON-NLS-2$
+
+        Spark.get(
+                Messages.getString("SuperRestInterface.HelloWorldURL"), (req, res) -> Messages.getString("SuperRestInterface.HelloWorld")); //$NON-NLS-1$ //$NON-NLS-2$
+
 
         EnvironmentContextRESTInterface
                 .setupEnvironmentContextRESTInterface(new EnvironmentContextRequestHandler());

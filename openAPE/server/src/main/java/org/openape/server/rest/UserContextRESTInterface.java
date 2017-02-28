@@ -24,7 +24,7 @@ public class UserContextRESTInterface extends SuperRestInterface {
                         // Try to map the received json object to a userContext
                         // object.
                         final UserContext recievedUserContext = (UserContext) SuperRestInterface
-                                .extractContentFromRequest(req, UserContext.class);
+                                .extractObjectFromRequest(req, UserContext.class);
                         // Test the object for validity.
                         if (!recievedUserContext.isValid()) {
                             res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
@@ -62,7 +62,8 @@ public class UserContextRESTInterface extends SuperRestInterface {
                          * Sample user context of a person with restricted
                          * viewing ability.
                          */
-                        UserContext restrictedVision = Main.sampleUserContextRestricedVision();
+                        final UserContext restrictedVision = Main
+                                .sampleUserContextRestricedVision();
                         res.status(SuperRestInterface.HTTP_STATUS_OK);
                         res.type(Messages.getString("UserContextRESTInterface.JsonMimeType")); //$NON-NLS-1$
                         final ObjectMapper mapper = new ObjectMapper();
@@ -100,7 +101,7 @@ public class UserContextRESTInterface extends SuperRestInterface {
                             .getString("UserContextRESTInterface.IDParam")); //$NON-NLS-1$
                     try {
                         final UserContext recievedUserContext = (UserContext) SuperRestInterface
-                                .extractContentFromRequest(req, UserContext.class);
+                                .extractObjectFromRequest(req, UserContext.class);
                         // Test the object for validity.
                         if (!recievedUserContext.isValid()) {
                             res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);

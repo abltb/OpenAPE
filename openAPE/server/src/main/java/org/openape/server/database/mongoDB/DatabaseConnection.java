@@ -11,12 +11,11 @@ import org.bson.types.ObjectId;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.DatabaseObject;
 import org.openape.api.Messages;
+import org.openape.server.MongoConfig;
 import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
 import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
@@ -35,35 +34,33 @@ import com.mongodb.client.MongoDatabase;
  * {@link UserContextRequestHandler}.
  */
 public class DatabaseConnection {
-	Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
     /**
      * The url to our mongo database server.
      */
-	    private static final String DATABASEURL = Messages
-            .getString("DatabaseConnection.MongoDBServerAddress"); // TODO replace by //$NON-NLS-1$
-    // the mongoDB url.
+    private static String DATABASEURL = Messages
+            .getString("DatabaseConnection.MongoDBServerAddress"); //$NON-NLS-1$
     /**
      * The standard port for online mongo databases.
      */
-    private static final int DATABASEPORT = 27017;
+    private static String DATABASEPORT = Messages.getString("DatabaseConnection.MongoDBServerPort"); //$NON-NLS-1$
 
     /**
      * The name of the mongo database holding the relevant data for this
      * application.
      */
-    private static final String DATABASENAME = Messages
+    private static String DATABASENAME = Messages
             .getString("DatabaseConnection.MongoDBDatabaseName"); //$NON-NLS-1$
 
     /**
      * The user name used by this application to connect to the mongo database.
      */
-    private static final String DATABASUSERNAME = Messages
+    private static String DATABASEUSERNAME = Messages
             .getString("DatabaseConnection.MongoDBDatabaseUsername"); //$NON-NLS-1$
 
     /**
      * The password used by this application to connect to the mongo database.
      */
-    private static final String DATABASEPASSWORD = Messages
+    private static String DATABASEPASSWORD = Messages
             .getString("DatabaseConnection.MongoDBDatabaseUserPassword"); //$NON-NLS-1$
 
     /**
@@ -123,21 +120,53 @@ public class DatabaseConnection {
      * private constructor to create the singleton database connection instance.
      */
     private DatabaseConnection() {
+        // import configuration file
+        final String name = MongoConfig.getString("databaseName");//$NON-NLS-1$
+        if (name != null && !name.equals("")) {
+            DatabaseConnection.DATABASENAME = name;
+        } else {
+            DatabaseConnection.DATABASENAME = Messages
+                    .getString("DatabaseConnection.MongoDBDatabaseName"); //$NON-NLS-1$
+        }
+        final String address = MongoConfig.getString("databaseURL");//$NON-NLS-1$
+        if (address != null && !address.equals("")) {
+            DatabaseConnection.DATABASEURL = address;
+        } else {
+            DatabaseConnection.DATABASEURL = Messages
+                    .getString("DatabaseConnection.MongoDBServerAddress"); //$NON-NLS-1$
+        }
+        final String port = MongoConfig.getString("databasePort");//$NON-NLS-1$
+        if (port != null && !port.equals("")) {
+            DatabaseConnection.DATABASEPORT = port;
+        } else {
+            DatabaseConnection.DATABASEPORT = Messages
+                    .getString("DatabaseConnection.MongoDBServerPort"); //$NON-NLS-1$
+        }
+        final String password = MongoConfig.getString("databasePassword");//$NON-NLS-1$
+        if (password != null && !password.equals("")) {
+            DatabaseConnection.DATABASEPASSWORD = password;
+        } else {
+            DatabaseConnection.DATABASEPASSWORD = Messages
+                    .getString("DatabaseConnection.MongoDBDatabaseUserPassword"); //$NON-NLS-1$
+        }
+        final String userName = MongoConfig.getString("databaseUsername");//$NON-NLS-1$
+        if (userName != null && !userName.equals("")) {
+            DatabaseConnection.DATABASEUSERNAME = userName;
+        } else {
+            DatabaseConnection.DATABASEUSERNAME = Messages
+                    .getString("DatabaseConnection.MongoDBDatabaseUsername"); //$NON-NLS-1$
+        }
         // Create credentials for the openAPE database
         final MongoCredential credential = MongoCredential.createCredential(
-                DatabaseConnection.DATABASUSERNAME, DatabaseConnection.DATABASENAME,
+                DatabaseConnection.DATABASEUSERNAME, DatabaseConnection.DATABASENAME,
                 DatabaseConnection.DATABASEPASSWORD.toCharArray());
 
         // Create database client for the openAPE database
         this.mongoClient = new MongoClient(new ServerAddress(DatabaseConnection.DATABASEURL,
-                DatabaseConnection.DATABASEPORT), Arrays.asList(credential));
+                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential));
 
         // Get a reference to the openAPE database.
         this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
-        logger.info("Connection to database at " + DatabaseConnection.DATABASEURL + ":" +
-                DatabaseConnection.DATABASEPORT + "successfuly established"     );
-        
-        
         // Get references to the database collections.
         this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
                 .toString());
@@ -271,8 +300,9 @@ public class DatabaseConnection {
             throws ClassCastException, IOException {
         // Check if data is of the correct type for the collection.
         if (!type.getDocumentType().equals(data.getClass())) {
-            throw new ClassCastException(Messages.getString("DatabaseConnection.doctypeErrorMassage") //$NON-NLS-1$
-                    + type.getDocumentType().getName());
+            throw new ClassCastException(
+                    Messages.getString("DatabaseConnection.doctypeErrorMassage") //$NON-NLS-1$
+                            + type.getDocumentType().getName());
         }
 
         final MongoCollection<Document> collectionToWorkOn = this.getCollectionByType(type);
@@ -324,8 +354,9 @@ public class DatabaseConnection {
             throws ClassCastException, IOException {
         // Check if data is of the correct type for the collection.
         if (!type.getDocumentType().equals(data.getClass())) {
-            throw new ClassCastException(Messages.getString("DatabaseConnection.doctypeErrorMassage") //$NON-NLS-1$
-                    + type.getDocumentType().getName());
+            throw new ClassCastException(
+                    Messages.getString("DatabaseConnection.doctypeErrorMassage") //$NON-NLS-1$
+                            + type.getDocumentType().getName());
         }
 
         final MongoCollection<Document> collectionToWorkOn = this.getCollectionByType(type);

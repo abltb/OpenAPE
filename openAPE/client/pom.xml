@@ -13,14 +13,12 @@
 	</parent>
 	<artifactId>client</artifactId>
 	<name>client</name>
-	<version>${ProjectVersion}</version>
-	<groupId>openape</groupId>
 
 	<dependencies>
 		<dependency>
 			<groupId>openape</groupId>
 			<artifactId>API</artifactId>
-			<version>${ProjectVersion}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.ws.rs</groupId>
