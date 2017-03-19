@@ -16,15 +16,22 @@ import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
 import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.ServerMonitorListener;
 
 /**
  * Singleton database connection class. Connects to the online mongo database to
@@ -33,7 +40,8 @@ import com.mongodb.client.MongoDatabase;
  * {@link EquipmentContextRequestHandler}, {@link TaskContextRequestHandler},
  * {@link UserContextRequestHandler}.
  */
-public class DatabaseConnection {
+public class DatabaseConnection implements ServerMonitorListener {
+	private static Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
     /**
      * The url to our mongo database server.
      */
@@ -75,7 +83,8 @@ public class DatabaseConnection {
      */
     public static DatabaseConnection getInstance() {
         if (DatabaseConnection.databaseConnectionInstance == null) {
-            DatabaseConnection.databaseConnectionInstance = new DatabaseConnection();
+            logger.info("create new database connection");
+        	DatabaseConnection.databaseConnectionInstance = new DatabaseConnection();
         }
         return DatabaseConnection.databaseConnectionInstance;
     }
@@ -161,12 +170,24 @@ public class DatabaseConnection {
                 DatabaseConnection.DATABASEUSERNAME, DatabaseConnection.DATABASENAME,
                 DatabaseConnection.DATABASEPASSWORD.toCharArray());
 
+        MongoClientOptions clientOptions = new MongoClientOptions.Builder()         .addServerMonitorListener(this).build();
+        
         // Create database client for the openAPE database
         this.mongoClient = new MongoClient(new ServerAddress(DatabaseConnection.DATABASEURL,
-                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential));
+                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential), clientOptions);
+        
 
         // Get a reference to the openAPE database.
         this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
+        
+        
+        try{
+        logger.info("problem1");
+        	this.mongoClient.getAddress();
+        	logger.info("problem 1.1");
+        } catch(Exception e){
+        	logger.error("Connecting to MongoDB at:" + this.DATABASEURL + ":" + this.DATABASEPORT + " failed"   		);
+        }
         // Get references to the database collections.
         this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
                 .toString());
@@ -380,5 +401,24 @@ public class DatabaseConnection {
 
         return true;
     }
+
+	@Override
+	public void serverHearbeatStarted(ServerHeartbeatStartedEvent event) {
+		System.out.println("Server heartbeet started");
+		
+	}
+
+	@Override
+	public void serverHeartbeatSucceeded(ServerHeartbeatSucceededEvent event) {
+		logger.info("Found successful mongoDB heartbeat"); 
+		
+	}
+
+	@Override
+	public void serverHeartbeatFailed(ServerHeartbeatFailedEvent event) {
+		logger.info("Problem2:" );
+		
+		
+	}
 
 }
