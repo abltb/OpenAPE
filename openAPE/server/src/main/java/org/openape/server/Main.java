@@ -27,7 +27,6 @@ public class Main {
         }
         new SuperRestInterface();
     }
-
     /**
      * @return a sample user context representing someone with restricted vision.
      */

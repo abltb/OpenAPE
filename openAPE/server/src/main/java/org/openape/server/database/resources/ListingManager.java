@@ -1,6 +1,5 @@
 package org.openape.server.database.resources;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ import org.openape.api.resourceDescription.ResourceDescription;
  * fitting resources to a {@link Listing}.
  */
 public class ListingManager {
-    protected static String query = "";
+    protected static String query = Messages.getString("EmptyString"); //$NON-NLS-1$
 
     /**
      * Looks for resource names that are represented in the resource description
@@ -27,12 +26,13 @@ public class ListingManager {
      * @throws IOException
      *             if unable to create resource folder.
      */
-    public static List<File> getResourcesFromListing(Listing listing) throws IOException {
+    public static List<GetResourceReturnType> getResourcesFromListing(Listing listing)
+            throws IOException {
         // reset query
-        ListingManager.query = "";
+        ListingManager.query = Messages.getString("EmptyString"); //$NON-NLS-1$
         final ResourceList resourceList = ResourceList.getInstance();
         final List<String> allResourceNames = resourceList.getResourceNameList();
-        final List<File> resources = new ArrayList<File>();
+        final List<GetResourceReturnType> resources = new ArrayList<GetResourceReturnType>();
         final ResourceDescription resourceDescription = listing.getResourceDescriptionQurey();
         // if no resource description if found return empty list.
         if (resourceDescription == null) {
@@ -40,9 +40,14 @@ public class ListingManager {
         }
         // add all values of descriptors of the resource description to the
         // query.
-        resourceDescription.getPropertys().forEach(
-                property -> property.getDescriptors().forEach(
-                        descriptor -> ListingManager.query += descriptor.getValue()));
+        resourceDescription.getPropertys()
+                .forEach(
+                        property -> property
+                                .getDescriptors()
+                                .keySet()
+                                .forEach(
+                                        key -> ListingManager.query += property.getDescriptors()
+                                                .get(key)));
         // get all resource names mentioned in the query and add the files into
         // the resources.
         for (final String name : allResourceNames) {

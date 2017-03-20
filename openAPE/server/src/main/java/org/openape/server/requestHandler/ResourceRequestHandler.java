@@ -1,15 +1,14 @@
 package org.openape.server.requestHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import javassist.NotFoundException;
 
-import javax.servlet.http.Part;
-
+import org.apache.commons.fileupload.FileItem;
 import org.openape.api.listing.Listing;
 import org.openape.server.database.mongoDB.DatabaseConnection;
+import org.openape.server.database.resources.GetResourceReturnType;
 import org.openape.server.database.resources.ListingManager;
 import org.openape.server.database.resources.ResourceList;
 import org.openape.server.rest.ResourceRESTInterface;
@@ -28,14 +27,17 @@ public class ResourceRequestHandler {
      *
      * @param resource
      *            to be stored.
+     * @param mimeType
+     *            mime type of the data to store
      * @return the ID of the stored resource.
      * @throws IOException
      *             if a storage problem still occurs, after to many tries.
      * @throws IllegalArgumentException
      *             if the resource name is already taken.
      */
-    public String createResource(Part resource) throws IOException, IllegalArgumentException {
-        return ResourceList.getInstance().addResource(resource);
+    public String createResource(FileItem resource, String mimeType) throws IOException,
+            IllegalArgumentException {
+        return ResourceList.getInstance().addResource(resource, mimeType);
     }
 
     /**
@@ -86,7 +88,8 @@ public class ResourceRequestHandler {
      * @throws IllegalArgumentException
      *             if the id is no valid id or not assigned.
      */
-    public File getResourceById(String id) throws IOException, IllegalArgumentException {
+    public GetResourceReturnType getResourceById(String id) throws IllegalArgumentException,
+            IOException {
         return ResourceList.getInstance().getResoureFile(id);
     }
 
@@ -106,7 +109,7 @@ public class ResourceRequestHandler {
      * @throws NotFoundException
      *             if no fitting resource is found.
      */
-    public List<File> getResourceByListing(Listing listing) throws IOException,
+    public List<GetResourceReturnType> getResourceByListing(Listing listing) throws IOException,
             IllegalArgumentException, NotFoundException {
         return ListingManager.getResourcesFromListing(listing);
     }

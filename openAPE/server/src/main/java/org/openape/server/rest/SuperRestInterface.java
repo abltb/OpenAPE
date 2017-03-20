@@ -2,9 +2,6 @@ package org.openape.server.rest;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.Messages;
 import org.openape.server.Main;
 import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
@@ -20,6 +17,10 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Spark;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class SuperRestInterface {
 	static Logger logger = LoggerFactory.getLogger(SuperRestInterface.class	);
     public static final int HTTP_STATUS_OK = 200;
@@ -28,6 +29,7 @@ public class SuperRestInterface {
     public static final int HTTP_STATUS_BAD_REQUEST = 400;
     public static final int HTTP_STATUS_NOT_FOUND = 404;
     public static final int HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
+    private static final boolean TEST_ENVIRONMENT = true;
 
     /**
      * Get a sent json object from a request.
@@ -79,6 +81,10 @@ public class SuperRestInterface {
         TaskContextRESTInterface.setupTaskContextRESTInterface(new TaskContextRequestHandler());
         UserContextRESTInterface.setupUserContextRESTInterface(new UserContextRequestHandler());
         logger.info("REST API successfully set up");
+        if (SuperRestInterface.TEST_ENVIRONMENT) {// test html interface found
+                                                  // under .../api/tests.
+            TestRESTInterface.setupTestRESTInterface();
+        }
     }
 
 }

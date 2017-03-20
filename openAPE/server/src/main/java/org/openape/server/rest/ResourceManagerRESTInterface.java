@@ -1,6 +1,9 @@
 package org.openape.server.rest;
 
-import org.openape.api.Messages;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import spark.Spark;
 
@@ -10,19 +13,31 @@ public class ResourceManagerRESTInterface extends SuperRestInterface {
          * Get HTML interface.
          */
         Spark.get(
-                Messages.getString("ResourceManagerRESTInterface.ResourceManagerURL"), (req, res) -> { //$NON-NLS-1$
-                    // try {
-                    // URL url =
-                    // getClass().getResource("resource-manager.html");
-                    // // Return a String which has all
-                    // // the contents of the file.
-                    // Path path = Paths.get(url.toURI());
-                    // return new String(Files.readAllBytes(path),
-                    // Charset.defaultCharset());
-                    // } catch (IOException | URISyntaxException e) {
-                    // Add exception handlers here.
-                    // }
-                    return null;
+                "/resource-manager",
+                (req, res) -> {
+                    String htmlInterface = "";
+                    try {
+                        // Get file contents of the html file to send.
+                        final InputStream inputStream = ResourceManagerRESTInterface.class
+                                .getClassLoader().getResourceAsStream(
+                                        File.separator + "webcontent" + File.separator
+                                                + "resource-manager.html");
+                        final BufferedReader bufferedReader = new BufferedReader(
+                                new InputStreamReader(inputStream, "UTF-8"));
+                        final StringBuilder fullContents = new StringBuilder();
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            fullContents.append(line + "\n");
+                        }
+                        htmlInterface = fullContents.toString();
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                        res.status(SuperRestInterface.HTTP_STATUS_INTERNAL_SERVER_ERROR);
+                        return e.getMessage();
+                    }
+                    res.type("text/html");
+                    res.status(SuperRestInterface.HTTP_STATUS_OK);
+                    return htmlInterface;
                 });
     }
 

@@ -2,15 +2,15 @@ package org.openape.server.rest;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.Messages;
 import org.openape.api.usercontext.UserContext;
-import org.openape.server.Main;
 import org.openape.server.requestHandler.UserContextRequestHandler;
 
 import spark.Spark;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserContextRESTInterface extends SuperRestInterface {
 
@@ -20,6 +20,10 @@ public class UserContextRESTInterface extends SuperRestInterface {
          */
         Spark.post(
                 Messages.getString("UserContextRESTInterface.UserContextURLWithoutID"), (req, res) -> { //$NON-NLS-1$
+                    if (!req.contentType().equals(Messages.getString("MimeTypeJson"))) {//$NON-NLS-1$
+                        res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
+                        return Messages.getString("Contexts.WrongMimeTypeErrorMsg");//$NON-NLS-1$
+                    }
                     try {
                         // Try to map the received json object to a userContext
                         // object.
@@ -55,21 +59,6 @@ public class UserContextRESTInterface extends SuperRestInterface {
                 Messages.getString("UserContextRESTInterface.UserContextURLWithID"), (req, res) -> { //$NON-NLS-1$
                     final String userContextId = req.params(Messages
                             .getString("UserContextRESTInterface.IDParam")); //$NON-NLS-1$
-                    // If the id restricted_vision is given, return the sample
-                    // user context.
-                    if (userContextId.equals("restricted_vision")) {
-                        /**
-                         * Sample user context of a person with restricted
-                         * viewing ability.
-                         */
-                        final UserContext restrictedVision = Main
-                                .sampleUserContextRestricedVision();
-                        res.status(SuperRestInterface.HTTP_STATUS_OK);
-                        res.type(Messages.getString("UserContextRESTInterface.JsonMimeType")); //$NON-NLS-1$
-                        final ObjectMapper mapper = new ObjectMapper();
-                        final String jsonData = mapper.writeValueAsString(restrictedVision);
-                        return jsonData;
-                    }
 
                     try {
                         // if it is successful return user context.
@@ -94,35 +83,38 @@ public class UserContextRESTInterface extends SuperRestInterface {
         /**
          * Request 7.2.4 update user-context.
          */
-        Spark.put(
-                Messages.getString("UserContextRESTInterface.UserContextURLWithID"), //$NON-NLS-1$
+        Spark.put(Messages.getString("UserContextRESTInterface.UserContextURLWithID"), //$NON-NLS-1$
                 (req, res) -> {
-                    final String userContextId = req.params(Messages
-                            .getString("UserContextRESTInterface.IDParam")); //$NON-NLS-1$
-                    try {
-                        final UserContext recievedUserContext = (UserContext) SuperRestInterface
-                                .extractObjectFromRequest(req, UserContext.class);
-                        // Test the object for validity.
-                        if (!recievedUserContext.isValid()) {
-                            res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
-                            return Messages
-                                    .getString("UserContextRESTInterface.NoValidObjectErrorMassage"); //$NON-NLS-1$
-                        }
-                        // If the object is okay, update it.
-                        requestHandler.updateUserContextById(userContextId, recievedUserContext);
-                        res.status(SuperRestInterface.HTTP_STATUS_OK);
-                        return Messages.getString("UserContextRESTInterface.EmptyString"); //$NON-NLS-1$ //TODO return right statuscode
-                    } catch (JsonParseException | JsonMappingException | IllegalArgumentException e) {
-                        // If the parse or update is not successful return bad
-                        // request
-                        // error code.
+                    if (!req.contentType().equals(Messages.getString("MimeTypeJson"))) {//$NON-NLS-1$
+                    res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
+                    return Messages.getString("Contexts.WrongMimeTypeErrorMsg");//$NON-NLS-1$
+                }
+                final String userContextId = req.params(Messages
+                        .getString("UserContextRESTInterface.IDParam")); //$NON-NLS-1$
+                try {
+                    final UserContext recievedUserContext = (UserContext) SuperRestInterface
+                            .extractObjectFromRequest(req, UserContext.class);
+                    // Test the object for validity.
+                    if (!recievedUserContext.isValid()) {
                         res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
-                        return e.getMessage();
-                    } catch (final IOException e) {
-                        res.status(SuperRestInterface.HTTP_STATUS_INTERNAL_SERVER_ERROR);
-                        return e.getMessage();
+                        return Messages
+                                .getString("UserContextRESTInterface.NoValidObjectErrorMassage"); //$NON-NLS-1$
                     }
-                });
+                    // If the object is okay, update it.
+                    requestHandler.updateUserContextById(userContextId, recievedUserContext);
+                    res.status(SuperRestInterface.HTTP_STATUS_OK);
+                    return Messages.getString("UserContextRESTInterface.EmptyString"); //$NON-NLS-1$ //TODO return right statuscode
+                } catch (JsonParseException | JsonMappingException | IllegalArgumentException e) {
+                    // If the parse or update is not successful return bad
+                    // request
+                    // error code.
+                    res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
+                    return e.getMessage();
+                } catch (final IOException e) {
+                    res.status(SuperRestInterface.HTTP_STATUS_INTERNAL_SERVER_ERROR);
+                    return e.getMessage();
+                }
+            });
 
         /**
          * Request 7.2.5 delete user-context.

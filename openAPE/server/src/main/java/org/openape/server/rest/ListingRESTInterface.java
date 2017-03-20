@@ -2,14 +2,15 @@ package org.openape.server.rest;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.Messages;
 import org.openape.api.listing.Listing;
 import org.openape.server.requestHandler.ListingRequestHandler;
 
 import spark.Spark;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ListingRESTInterface extends SuperRestInterface {
 
@@ -19,9 +20,13 @@ public class ListingRESTInterface extends SuperRestInterface {
          */
         Spark.post(Messages.getString("ListingRESTInterface.ListingURLWithoutID"), (req, res) -> { //$NON-NLS-1$
                     try {
-                        // Try to map the received json object to a
-                        // environmentContext
-                        // object.
+                        if (!req.contentType().equals(Messages.getString("MimeTypeJson"))) {//$NON-NLS-1$
+                    res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
+                    return Messages.getString("Contexts.WrongMimeTypeErrorMsg");//$NON-NLS-1$
+                }
+                // Try to map the received json object to a
+                // environmentContext
+                // object.
                 final Listing recievedListing = (Listing) SuperRestInterface
                         .extractObjectFromRequest(req, Listing.class);
                 // Test the object for validity.

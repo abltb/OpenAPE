@@ -8,7 +8,6 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.json.JsonParseException;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.openape.api.DatabaseObject;
 import org.openape.api.Messages;
 import org.openape.server.MongoConfig;
@@ -17,6 +16,7 @@ import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -106,15 +106,18 @@ public class DatabaseConnection {
      */
     private MongoCollection<Document> taskContextCollection;
     /**
-     * Database collection containing the resources offered by the server.
+     * Database collection containing the resources descriptions by the server.
      */
-    private MongoCollection<Document> resourceOfferContectCollection;
-
+    private MongoCollection<Document> resourceDescriptionContectCollection;
     /**
-     * Database collection containing the incomplete request resources used by
-     * the client to search for fitting resource.
+     * Database collection containing the listings used by the client to search
+     * for fitting resource.
      */
-    private MongoCollection<Document> resourceRequestContextCollection;
+    private MongoCollection<Document> listingContextCollection;
+    /**
+     * Database collection holding the mime types of the stored resources.
+     */
+    private MongoCollection<Document> resourceMimeTypesCollection;
 
     /**
      * private constructor to create the singleton database connection instance.
@@ -122,35 +125,38 @@ public class DatabaseConnection {
     private DatabaseConnection() {
         // import configuration file
         final String name = MongoConfig.getString("databaseName");//$NON-NLS-1$
-        if (name != null && !name.equals("")) {
+        if (name != null && !name.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASENAME = name;
         } else {
             DatabaseConnection.DATABASENAME = Messages
                     .getString("DatabaseConnection.MongoDBDatabaseName"); //$NON-NLS-1$
         }
         final String address = MongoConfig.getString("databaseURL");//$NON-NLS-1$
-        if (address != null && !address.equals("")) {
+        if (address != null
+                && !address.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASEURL = address;
         } else {
             DatabaseConnection.DATABASEURL = Messages
                     .getString("DatabaseConnection.MongoDBServerAddress"); //$NON-NLS-1$
         }
         final String port = MongoConfig.getString("databasePort");//$NON-NLS-1$
-        if (port != null && !port.equals("")) {
+        if (port != null && !port.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASEPORT = port;
         } else {
             DatabaseConnection.DATABASEPORT = Messages
                     .getString("DatabaseConnection.MongoDBServerPort"); //$NON-NLS-1$
         }
         final String password = MongoConfig.getString("databasePassword");//$NON-NLS-1$
-        if (password != null && !password.equals("")) {
+        if (password != null
+                && !password.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASEPASSWORD = password;
         } else {
             DatabaseConnection.DATABASEPASSWORD = Messages
                     .getString("DatabaseConnection.MongoDBDatabaseUserPassword"); //$NON-NLS-1$
         }
         final String userName = MongoConfig.getString("databaseUsername");//$NON-NLS-1$
-        if (userName != null && !userName.equals("")) {
+        if (userName != null
+                && !userName.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASEUSERNAME = userName;
         } else {
             DatabaseConnection.DATABASEUSERNAME = Messages
@@ -176,10 +182,12 @@ public class DatabaseConnection {
                 .getCollection(MongoCollectionTypes.EQUIPMENTCONTEXT.toString());
         this.taskContextCollection = this.database.getCollection(MongoCollectionTypes.TASKCONTEXT
                 .toString());
-        this.resourceOfferContectCollection = this.database
+        this.resourceDescriptionContectCollection = this.database
                 .getCollection(MongoCollectionTypes.RESOURCEDESCRIPTION.toString());
-        this.resourceRequestContextCollection = this.database
-                .getCollection(MongoCollectionTypes.LISTING.toString());
+        this.listingContextCollection = this.database.getCollection(MongoCollectionTypes.LISTING
+                .toString());
+        this.resourceMimeTypesCollection = this.database
+                .getCollection(MongoCollectionTypes.RESOURCEMIMETYPES.toString());
 
     }
 
@@ -214,6 +222,33 @@ public class DatabaseConnection {
     }
 
     /**
+     * Delete a mime type of a stored resource.
+     *
+     * @param fileName
+     *            file name of the resource, used as id.
+     * @return true if successful of false if the object is not found.
+     * @throws IOException
+     *             if a database problem occurs.
+     */
+    public boolean deleteMimeType(String fileName) throws IOException {
+        final MongoCollection<Document> collectionToWorkOn = this
+                .getCollectionByType(MongoCollectionTypes.RESOURCEMIMETYPES);
+
+        // Create search query.
+        final BasicDBObject query = new BasicDBObject();
+        query.put(Messages.getString("DatabaseConnection._id"), fileName); //$NON-NLS-1$
+
+        // deleted will be null if no data with the given id is found.
+        final Document deleted = collectionToWorkOn.findOneAndDelete(query);
+        if (deleted == null) {
+            return false;
+        } else {
+            return true;
+        }
+
+    }
+
+    /**
      * Get a mongo collection reference by providing the collection type.
      *
      * @param type
@@ -229,9 +264,11 @@ public class DatabaseConnection {
         } else if (type.equals(MongoCollectionTypes.TASKCONTEXT)) {
             return this.taskContextCollection;
         } else if (type.equals(MongoCollectionTypes.RESOURCEDESCRIPTION)) {
-            return this.resourceOfferContectCollection;
+            return this.resourceDescriptionContectCollection;
         } else if (type.equals(MongoCollectionTypes.LISTING)) {
-            return this.resourceRequestContextCollection;
+            return this.listingContextCollection;
+        } else if (type.equals(MongoCollectionTypes.RESOURCEMIMETYPES)) {
+            return this.resourceMimeTypesCollection;
         } else {
             return null; // Should never occur.
         }
@@ -271,7 +308,9 @@ public class DatabaseConnection {
             try {
                 // Remove the automatically added id.
                 resultDocument.remove(Messages.getString("DatabaseConnection._id")); //$NON-NLS-1$
-                final String jsonResult = resultDocument.toJson();
+                String jsonResult = resultDocument.toJson();
+                // reverse mongo special character replacement.
+                jsonResult = this.reverseMongoSpecialCharsReplacement(jsonResult);
                 final ObjectMapper mapper = new ObjectMapper();
                 result = mapper.readValue(jsonResult, type.getDocumentType());
             } catch (CodecConfigurationException | IOException | JsonParseException e) {
@@ -280,6 +319,93 @@ public class DatabaseConnection {
             }
             return result;
         }
+    }
+
+    /**
+     * Get stored mime type of a resource stored in the file system.
+     *
+     * @param fileName
+     *            of the resource, used as id.
+     * @return mime type as string or null if none is found.
+     * @throws IOException
+     *             if an error arouses.
+     */
+    public String getMimeType(String fileName) throws IOException {
+        final MongoCollection<Document> collectionToWorkOn = this
+                .getCollectionByType(MongoCollectionTypes.RESOURCEMIMETYPES);
+
+        // Search for object in database.
+        final BasicDBObject query = new BasicDBObject();
+        query.put(Messages.getString("DatabaseConnection._id"), fileName); //$NON-NLS-1$
+        final FindIterable<Document> resultIteratable = collectionToWorkOn.find(query);
+
+        final Iterator<Document> resultInterator = resultIteratable.iterator();
+        if (!resultInterator.hasNext()) {
+            // If no result is found return null.
+            return null;
+        } else {
+            // get the first result. Souldn't ever be more than one since _ids
+            // are supposed to be unique.
+            final Document resultDocument = resultInterator.next();
+            String mimetype = null;
+            try {
+                // Remove the automatically added id.
+                resultDocument.remove(Messages.getString("DatabaseConnection._id")); //$NON-NLS-1$
+                String jsonResult = resultDocument.toJson();
+                // reverse mongo special character replacement.
+                jsonResult = this.reverseMongoSpecialCharsReplacement(jsonResult);
+                final ObjectMapper mapper = new ObjectMapper();
+                final DatabaseObject mimeTypeObject = mapper.readValue(jsonResult,
+                        MimeTypeDatabaseObject.class);
+                mimetype = ((MimeTypeDatabaseObject) mimeTypeObject).getMimeType();
+            } catch (CodecConfigurationException | IOException | JsonParseException e) {
+                e.printStackTrace();
+                throw new IOException(e.getMessage());
+            }
+            return mimetype;
+        }
+    }
+
+    /**
+     * Replaces special chars '.' and '$' with '#046' and '#036".
+     *
+     * @param jsonToStore
+     * @return The modified string.
+     * @throws IllegalArgumentException
+     *             if it already contains '#046' or '#036".
+     */
+    private String replaceMongoSpecialChars(String jsonToStore) throws IllegalArgumentException {
+        if (jsonToStore.contains(Messages.getString("DatabaseConnection.pointAsciiCode")) || jsonToStore.contains(Messages.getString("DatabaseConnection.$AsciiCode"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            throw new IllegalArgumentException(
+                    Messages.getString("DatabaseConnection.specialCharReplacementInUseErrorMsg")); //$NON-NLS-1$
+        } else if (jsonToStore.contains(Messages.getString("DatabaseConnection.point")) || jsonToStore.contains(Messages.getString("DatabaseConnection.$"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            jsonToStore = jsonToStore
+                    .replace(
+                            Messages.getString("DatabaseConnection.point"), Messages.getString("DatabaseConnection.pointAsciiCode")); //$NON-NLS-1$ //$NON-NLS-2$
+            jsonToStore = jsonToStore
+                    .replace(
+                            Messages.getString("DatabaseConnection.$"), Messages.getString("DatabaseConnection.$AsciiCode")); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return jsonToStore;
+    }
+
+    /**
+     * Replaces '#046' and '#036" with '.' and '$'.
+     *
+     * @param jsonFromStorage
+     * @return The modified string.
+     */
+    private String reverseMongoSpecialCharsReplacement(String jsonFromStorage)
+            throws IllegalArgumentException {
+        if (jsonFromStorage.contains(Messages.getString("DatabaseConnection.pointAsciiCode")) || jsonFromStorage.contains(Messages.getString("DatabaseConnection.$AsciiCode"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            jsonFromStorage = jsonFromStorage
+                    .replace(
+                            Messages.getString("DatabaseConnection.pointAsciiCode"), Messages.getString("DatabaseConnection.point")); //$NON-NLS-1$ //$NON-NLS-2$
+            jsonFromStorage = jsonFromStorage
+                    .replace(
+                            Messages.getString("DatabaseConnection.$AsciiCode"), Messages.getString("DatabaseConnection.$")); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return jsonFromStorage;
     }
 
     /**
@@ -297,7 +423,7 @@ public class DatabaseConnection {
      *             if a database problem occurs.
      */
     public String storeData(MongoCollectionTypes type, DatabaseObject data)
-            throws ClassCastException, IOException {
+            throws ClassCastException, IOException, IllegalArgumentException {
         // Check if data is of the correct type for the collection.
         if (!type.getDocumentType().equals(data.getClass())) {
             throw new ClassCastException(
@@ -311,7 +437,10 @@ public class DatabaseConnection {
         Document dataDocument = null;
         try {
             final ObjectMapper mapper = new ObjectMapper();
-            final String jsonData = mapper.writeValueAsString(data);
+            String jsonData = mapper.writeValueAsString(data);
+            // Deal with special mongoDB characters '.' and '$'.
+            jsonData = this.replaceMongoSpecialChars(jsonData);
+            System.out.println(jsonData);
             dataDocument = Document.parse(jsonData);
             // Insert the document.
             collectionToWorkOn.insertOne(dataDocument);
@@ -330,6 +459,47 @@ public class DatabaseConnection {
         }
 
         return id.toHexString();
+    }
+
+    /**
+     * Used to store a string mime type of a stored resource.
+     *
+     * @param fileName
+     *            name of the file, used as id.
+     * @param mimeType
+     *            string mime type of the resource with the given name.
+     * @return true if successful else a exception will be thrown.
+     * @throws IOException
+     * @throws IllegalArgumentException
+     *             if filename is already in use as a key.
+     */
+    public boolean storeMimeType(String fileName, String mimeType) throws IOException,
+            IllegalArgumentException {
+        // check if key is in use.
+        if (this.getMimeType(fileName) != null) {
+            throw new IllegalArgumentException(
+                    Messages.getString("ResourceList.FilenameInUseErrorMassage"));
+        }
+        final MongoCollection<Document> collectionToWorkOn = this
+                .getCollectionByType(MongoCollectionTypes.RESOURCEMIMETYPES);
+        // Object representation of the string. Needed for storage.
+        final MimeTypeDatabaseObject data = new MimeTypeDatabaseObject(mimeType);
+        // Create Document from data.
+        Document dataDocument = null;
+        try {
+            final ObjectMapper mapper = new ObjectMapper();
+            String jsonData = mapper.writeValueAsString(data);
+            // Deal with special mongoDB characters '.' and '$'.
+            jsonData = this.replaceMongoSpecialChars(jsonData);
+            dataDocument = Document.parse(jsonData);
+            dataDocument.append(Messages.getString("DatabaseConnection._id"), fileName);//$NON-NLS-1$
+            // Insert the document.
+            collectionToWorkOn.insertOne(dataDocument);
+        } catch (IOException | JsonParseException | MongoException e) {
+            e.printStackTrace();
+            throw new IOException(e.getMessage());
+        }
+        return true;
     }
 
     /**
@@ -352,6 +522,11 @@ public class DatabaseConnection {
      */
     public boolean updateData(MongoCollectionTypes type, DatabaseObject data, String id)
             throws ClassCastException, IOException {
+        // test if data can be found. Throws exceptions or is null if not.
+        if (this.getData(type, id) == null) {
+            return false;
+        }
+
         // Check if data is of the correct type for the collection.
         if (!type.getDocumentType().equals(data.getClass())) {
             throw new ClassCastException(
@@ -368,7 +543,9 @@ public class DatabaseConnection {
         try {
             // Create document object from data.
             final ObjectMapper mapper = new ObjectMapper();
-            final String jsonData = mapper.writeValueAsString(data);
+            String jsonData = mapper.writeValueAsString(data);
+            // Deal with special mongoDB characters '.' and '$'.
+            jsonData = this.replaceMongoSpecialChars(jsonData);
             final Document dataDocument = Document.parse(jsonData);
 
             // update data.
@@ -380,5 +557,4 @@ public class DatabaseConnection {
 
         return true;
     }
-
 }
