@@ -1,5 +1,3 @@
-package org.openape.api.usercontext;
-
 /**
  Copyright 2016 Hochschule der Medien - Stuttgart Media University
 
@@ -16,14 +14,16 @@ package org.openape.api.usercontext;
  limitations under the License.
  */
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+package org.openape.api.usercontext;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import javax.xml.bind.annotation.XmlElement;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Context implements Serializable {
     private static final long serialVersionUID = -8602234372848554234L;
@@ -37,15 +37,18 @@ public class Context implements Serializable {
      * @return true, if compare has the same preferences as base, false if not.
      */
     private static boolean hasContextTheSamePreferences(Context base, Context compare) {
-        for (final Preference basePreference : base.getPreferences()) {
+        final Set<String> baseKeySet = base.getPreferences().keySet();
+        final Set<String> compareKeySet = compare.getPreferences().keySet();
+        for (final String baseKey : baseKeySet) {
             // Match checks if for each preference in this there is one in
             // compare.
             boolean match = false;
-            for (final Preference comparePreference : compare.getPreferences()) {
+            for (final String compareKey : compareKeySet) {
                 // if key fits check if value fits.
-                if (basePreference.getKey().equals(comparePreference.getKey())) {
+                if (baseKey.equals(compareKey)) {
                     match = true;
-                    if (!basePreference.equals(comparePreference)) {
+                    if (!base.getPreferences().get(baseKey)
+                            .equals(compare.getPreferences().get(compareKey))) {
                         return false;
                     }
                 }
@@ -58,10 +61,9 @@ public class Context implements Serializable {
         return true;
     }
 
-    private String id;
     private String name;
 
-    private List<Preference> preferences = new ArrayList<Preference>();
+    private Map<String, String> preferences = new HashMap<String, String>();
 
     /**
      * Default Constructor needed for json object mapper.
@@ -70,14 +72,12 @@ public class Context implements Serializable {
 
     }
 
-    public Context(String name, String id) {
+    public Context(String name) {
         this.name = name;
-        this.id = id;
     }
 
     public void addPreference(String key, String value) {
-        final Preference newPreference = new Preference(key, value);
-        this.preferences.add(newPreference);
+        this.preferences.put(key, value);
     }
 
     /**
@@ -91,19 +91,9 @@ public class Context implements Serializable {
      */
     @JsonIgnore
     public boolean equals(Context compare) {
-        // check if context attributes are equal.
-        if (!(this.getId().equals(compare.getId()) && this.getName().equals(compare.getName()))) {
-            return false;
-        } else {
-            // check if preferences are equal
-            return (Context.hasContextTheSamePreferences(compare, this) && Context
-                    .hasContextTheSamePreferences(this, compare));
-        }
-    }
-
-    @XmlAttribute(name = "id")
-    public String getId() {
-        return this.id;
+        // check if preferences are equal
+        return (Context.hasContextTheSamePreferences(compare, this) && Context
+                .hasContextTheSamePreferences(this, compare));
     }
 
     @XmlElement(name = "name")
@@ -112,19 +102,15 @@ public class Context implements Serializable {
     }
 
     @XmlElement(name = "preference")
-    public List<Preference> getPreferences() {
+    public Map<String, String> getPreferences() {
         return this.preferences;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setPreferences(List<Preference> preferences) {
+    public void setPreferences(Map<String, String> preferences) {
         this.preferences = preferences;
     }
 

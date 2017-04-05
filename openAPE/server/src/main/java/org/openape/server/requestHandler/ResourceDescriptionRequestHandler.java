@@ -134,16 +134,6 @@ public class ResourceDescriptionRequestHandler {
     }
 
     /**
-     * TODO implement
-     *
-     * @param listing
-     * @return
-     */
-    public ResourceDescription getResourceDescriptionFromListing(Listing listing) {
-        return null;
-    }
-
-    /**
      * Method to update an existing resource description on the server. It is
      * used by the rest API {@link ResourceDescriptionRESTInterface} and uses
      * the server database {@link DatabaseConnection}.
