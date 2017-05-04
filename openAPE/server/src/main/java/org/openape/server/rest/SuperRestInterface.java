@@ -1,5 +1,6 @@
 package org.openape.server.rest;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.openape.api.Messages;
@@ -52,7 +53,13 @@ public class SuperRestInterface {
      * points of the application.
      */
     public SuperRestInterface() {
-        /**
+    	Spark.staticFiles.location("webcontent");
+        
+    	File extContent = new File(System.getProperty("java.io.tmpdir")+"/extContent");
+    	if (!extContent.exists()) extContent.mkdir();
+    	Spark.staticFiles.externalLocation(System.getProperty("java.io.tmpdir")+"/extContent");
+    
+     	/**
          * test request to test if the server runs. Invoke locally using:
          * http://localhost:4567/hello if started from main.
          */
@@ -73,7 +80,7 @@ public class SuperRestInterface {
         if (SuperRestInterface.TEST_ENVIRONMENT) {// test html interface found
                                                   // under .../api/tests.
             TestRESTInterface.setupTestRESTInterface();
-        }
+        }           
     }
 
 }
