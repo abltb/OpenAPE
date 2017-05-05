@@ -23,15 +23,14 @@ import java.util.Set;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.openape.api.DatabaseObject;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.openape.api.Resource;
 
 /**
  * User context object defined in 7.2.1
  */
 @XmlRootElement
-public class UserContext extends DatabaseObject {
+public class UserContext extends Resource {
     private static final long serialVersionUID = 5891055316807633786L;
 
     /**
