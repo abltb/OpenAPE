@@ -88,9 +88,6 @@ ResourceDescriptionRESTInterface.setupResourceDescriptionRESTInterface(new Resou
         TaskContextRESTInterface.setupTaskContextRESTInterface(new TaskContextRequestHandler(), authService);
         UserContextRESTInterface.setupUserContextRESTInterface(new UserContextRequestHandler(), authService);
         // Test html interface found
-        if (SuperRestInterface.TEST_ENVIRONMENT) {// test html interface found
-                                                  // under .../api/tests.
-        
         if(SuperRestInterface.TEST_ENVIRONMENT) {
             TestRESTInterface.setupTestRESTInterface();
         }           
