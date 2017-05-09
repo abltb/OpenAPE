@@ -83,7 +83,7 @@ public class SuperRestInterface {
         ListingRESTInterface.setupListingRESTInterface(new ListingRequestHandler());
                 
 ResourceDescriptionRESTInterface.setupResourceDescriptionRESTInterface(new ResourceDescriptionRequestHandler(), authService);
-        ResourceManagerRESTInterface.setupResourceManagerRESTInterface();
+        
         ResourceRESTInterface.setupResourceRESTInterface(new ResourceRequestHandler());
         TaskContextRESTInterface.setupTaskContextRESTInterface(new TaskContextRequestHandler(), authService);
         UserContextRESTInterface.setupUserContextRESTInterface(new UserContextRequestHandler(), authService);
