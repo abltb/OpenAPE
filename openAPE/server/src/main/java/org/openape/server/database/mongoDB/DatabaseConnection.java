@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import com.mongodb.client.model.IndexOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.json.JsonParseException;
@@ -118,6 +119,10 @@ public class DatabaseConnection {
      * Database collection holding the mime types of the stored resources.
      */
     private MongoCollection<Document> resourceMimeTypesCollection;
+    /**
+     * Database collection holding the users.
+     */
+    private MongoCollection<Document> userCollection;
 
     /**
      * private constructor to create the singleton database connection instance.
@@ -188,6 +193,8 @@ public class DatabaseConnection {
                 .toString());
         this.resourceMimeTypesCollection = this.database
                 .getCollection(MongoCollectionTypes.RESOURCEMIMETYPES.toString());
+        this.userCollection = this.database
+                .getCollection(MongoCollectionTypes.USERS.toString());
 
     }
 
@@ -269,6 +276,8 @@ public class DatabaseConnection {
             return this.listingContextCollection;
         } else if (type.equals(MongoCollectionTypes.RESOURCEMIMETYPES)) {
             return this.resourceMimeTypesCollection;
+        } else if (type.equals(MongoCollectionTypes.USERS)) {
+            return this.userCollection;
         } else {
             return null; // Should never occur.
         }
@@ -289,36 +298,28 @@ public class DatabaseConnection {
      */
     public DatabaseObject getData(MongoCollectionTypes type, String id) throws IOException {
         final MongoCollection<Document> collectionToWorkOn = this.getCollectionByType(type);
-
         // Search for object in database.
         final BasicDBObject query = new BasicDBObject();
-        query.put(Messages.getString("DatabaseConnection._id"), new ObjectId(id)); //$NON-NLS-1$
-        final FindIterable<Document> resultIteratable = collectionToWorkOn.find(query);
+        query.put(Messages.getString("DatabaseConnection._id"), new ObjectId(id));
+        return executeQuery(type, collectionToWorkOn, query, false);
+    }
 
-        final Iterator<Document> resultInterator = resultIteratable.iterator();
-        if (!resultInterator.hasNext()) {
-            // If no result is found return null.
-            return null;
-        } else {
-            // get the first result. Souldn't ever be more than one since _ids
-            // are supposed to be unique.
-            final Document resultDocument = resultInterator.next();
-
-            DatabaseObject result = null;
-            try {
-                // Remove the automatically added id.
-                resultDocument.remove(Messages.getString("DatabaseConnection._id")); //$NON-NLS-1$
-                String jsonResult = resultDocument.toJson();
-                // reverse mongo special character replacement.
-                jsonResult = this.reverseMongoSpecialCharsReplacement(jsonResult);
-                final ObjectMapper mapper = new ObjectMapper();
-                result = mapper.readValue(jsonResult, type.getDocumentType());
-            } catch (CodecConfigurationException | IOException | JsonParseException e) {
-                e.printStackTrace();
-                throw new IOException(e.getMessage());
-            }
-            return result;
-        }
+    /**
+     * Query a collection by a certain attribute and value. Will return the first document matching the query or
+     * null if no document matches the query.
+     *
+     * @param type the collection in which the object is located.
+     * @param attribute the attribute to query for
+     * @param value the value for the attribute to query for
+     * @return
+     * @throws IOException
+     */
+    public DatabaseObject getByUniqueAttribute(MongoCollectionTypes type, String attribute, String value) throws IOException {
+        final MongoCollection<Document> collectionToWorkOn = this.getCollectionByType(type);
+        // Search for object in database.
+        final BasicDBObject query = new BasicDBObject();
+        query.put(attribute, value);
+        return executeQuery(type, collectionToWorkOn, query, true);
     }
 
     /**
@@ -363,6 +364,44 @@ public class DatabaseConnection {
                 throw new IOException(e.getMessage());
             }
             return mimetype;
+        }
+    }
+
+    /**
+     * Execute a Mongo BasicDBObject query on the given collection and return the result as a DatabaseObject of the
+     * given collection.
+     *
+     * @param type the type of the collections DatabaseObject
+     * @param collection the collection in which the object is located.
+     * @param query the Mongo query to be executed
+     * @return
+     * @throws IOException
+     */
+    private DatabaseObject executeQuery(MongoCollectionTypes type, MongoCollection collection, BasicDBObject query, boolean includeId) throws IOException {
+        final Iterator<Document> resultIterator = collection.find(query).iterator();
+        if(resultIterator.hasNext()) {
+            final Document resultDocument = resultIterator.next();
+            DatabaseObject result = null;
+            try {
+                // Remove the MongoDB id field
+                ObjectId oid = (ObjectId) resultDocument.get("_id");
+                resultDocument.remove(Messages.getString("DatabaseConnection._id")); //$NON-NLS-1$
+                if(includeId) {
+                    resultDocument.append("id", oid.toString());
+                }
+                String jsonResult = resultDocument.toJson();
+                // reverse mongo special character replacement.
+                jsonResult = this.reverseMongoSpecialCharsReplacement(jsonResult);
+                final ObjectMapper mapper = new ObjectMapper();
+                result = mapper.readValue(jsonResult, type.getDocumentType());
+            } catch (CodecConfigurationException | IOException | JsonParseException e) {
+                e.printStackTrace();
+                throw new IOException(e.getMessage());
+            }
+            return result;
+        } else {
+            // If no result is found return null.
+            return null;
         }
     }
 
@@ -556,4 +595,15 @@ public class DatabaseConnection {
 
         return true;
     }
+
+    /**
+     * Make sure indexes for the application are set.
+     */
+    public void ensureIndexes() {
+        // Make sure email is unique for all users
+        this.userCollection.createIndex(new BasicDBObject("email", 1), new IndexOptions().unique(true));
+        // Make sure username is unique for all users
+        this.userCollection.createIndex(new BasicDBObject("username", 1), new IndexOptions().unique(true));
+    }
+
 }

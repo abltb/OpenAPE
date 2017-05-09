@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.openape.api.Messages;
 import org.openape.api.listing.Listing;
 import org.openape.api.resourceDescription.ResourceDescription;
+import org.openape.server.auth.AuthService;
 import org.openape.server.requestHandler.ResourceDescriptionRequestHandler;
 
 import spark.Spark;
@@ -16,7 +17,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ResourceDescriptionRESTInterface extends SuperRestInterface {
 
     public static void setupResourceDescriptionRESTInterface(
-            final ResourceDescriptionRequestHandler requestHandler) {
+            final ResourceDescriptionRequestHandler requestHandler, AuthService auth) {
+
+        // Authentication: Make sure only registered principals (users and admins) can create a new resource description
+        Spark.before(Messages.getString("ResourceDescriptionRESTInterface.ResourceDescriptionURLWithoutID"), auth.authorize("user"));
+        // Authentication: Everyone can access the route for a specific resource description
+        Spark.before(Messages.getString("ResourceDescriptionRESTInterface.ResourceDescriptionURLWithID"), auth.authorize("anonymous"));
+
         /**
          * Request 7.7.2 create resource description.
          */
@@ -27,20 +34,20 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                             res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
                             return Messages.getString("Contexts.WrongMimeTypeErrorMsg");//$NON-NLS-1$
                         }
-                        // Try to map the received json object to a
-                        // resource description
-                        // object.
-                        final ResourceDescription recievedResourceDescription = (ResourceDescription) SuperRestInterface
+                        // Try to map the received json object to a resource description object.
+                        final ResourceDescription receivedResourceDescription = (ResourceDescription) SuperRestInterface
                                 .extractObjectFromRequest(req, ResourceDescription.class);
+                        // Make sure to set the id of the authenticated user as the ownerId
+                        receivedResourceDescription.setOwner(auth.getAuthenticatedUser(req, res).getId());
                         // Test the object for validity.
-                        if (!recievedResourceDescription.isValid()) {
+                        if (!receivedResourceDescription.isValid()) {
                             res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
                             return Messages
                                     .getString("ResourceDescriptionRESTInterface.NoValidObjectErrorMassage"); //$NON-NLS-1$
                         }
                         // If the object is okay, save it and return the id.
                         final String resourceDescriptionId = requestHandler
-                                .createResourceDescription(recievedResourceDescription);
+                                .createResourceDescription(receivedResourceDescription);
                         res.status(SuperRestInterface.HTTP_STATUS_CREATED);
                         return resourceDescriptionId;
                     } catch (JsonParseException | JsonMappingException e) {
@@ -64,8 +71,9 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                     final String resourceDescriptionId = req.params(":resource-description-id"); //$NON-NLS-1$
                 try {
                     // if it is successful return resource description.
-                    final ResourceDescription resourceDescription = requestHandler
-                            .getResourceDescriptionById(resourceDescriptionId);
+                    final ResourceDescription resourceDescription = requestHandler.getResourceDescriptionById(resourceDescriptionId);
+                    // Make sure only admins or the owner can view the resource description, except if it is public
+                    auth.allowAdminOwnerAndPublic(req, res, resourceDescription.getOwner(), resourceDescription.isPublic());
                     res.status(SuperRestInterface.HTTP_STATUS_OK);
                     res.type(Messages.getString("ResourceDescriptionRESTInterface.jsonMimeType")); //$NON-NLS-1$
                     final ObjectMapper mapper = new ObjectMapper();
@@ -131,17 +139,22 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                 final String resourceDescriptionId = req.params(Messages
                         .getString("ResourceDescriptionRESTInterface.IDParam")); //$NON-NLS-1$
                 try {
-                    final ResourceDescription recievedResourceDescription = (ResourceDescription) SuperRestInterface
+                    final ResourceDescription receivedResourceDescription = (ResourceDescription) SuperRestInterface
                             .extractObjectFromRequest(req, ResourceDescription.class);
                     // Test the object for validity.
-                    if (!recievedResourceDescription.isValid()) {
+                    if (!receivedResourceDescription.isValid()) {
                         res.status(SuperRestInterface.HTTP_STATUS_BAD_REQUEST);
                         return Messages
                                 .getString("ResourceDescriptionRESTInterface.NoValidObjectErrorMassage"); //$NON-NLS-1$
                     }
-                    // If the object is okay, update it.
+                    // Check if the resource description does exist
+                    final ResourceDescription resourceDescription = requestHandler.getResourceDescriptionById(resourceDescriptionId);
+                    // Make sure only admins and the owner can update a context
+                    auth.allowAdminAndOwner(req, res, resourceDescription.getOwner());
+                    receivedResourceDescription.setOwner(resourceDescription.getOwner()); // Make sure the owner can't be changed
+                    // Perform the update
                     requestHandler.updateResourceDescriptionById(resourceDescriptionId,
-                            recievedResourceDescription);
+                            receivedResourceDescription);
                     res.status(SuperRestInterface.HTTP_STATUS_OK);
                     return Messages.getString("ResourceDescriptionRESTInterface.EmptyString"); // TODO return right statuscode //$NON-NLS-1$
                 } catch (JsonParseException | JsonMappingException | IllegalArgumentException e) {
@@ -164,7 +177,11 @@ public class ResourceDescriptionRESTInterface extends SuperRestInterface {
                     final String resourceDescriptionId = req.params(Messages
                             .getString("ResourceDescriptionRESTInterface.IDParam")); //$NON-NLS-1$
                     try {
-                        // if it is successful return empty string.
+                        // Check if the resource description does exist
+                        final ResourceDescription resourceDescription = requestHandler.getResourceDescriptionById(resourceDescriptionId);
+                        // Make sure only admins and the owner can delete a context
+                        auth.allowAdminAndOwner(req, res, resourceDescription.getOwner());
+                        // Perform delete and return empty string.
                         requestHandler.deleteResourceDescriptionById(resourceDescriptionId);
                         res.status(SuperRestInterface.HTTP_STATUS_NO_CONTENT);
                         return Messages.getString("ResourceDescriptionRESTInterface.EmptyString"); //$NON-NLS-1$
