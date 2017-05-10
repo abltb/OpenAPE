@@ -1,5 +1,6 @@
 package org.openape.server.rest;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.openape.api.Messages;
@@ -55,10 +56,17 @@ public class SuperRestInterface {
      * points of the application.
      */
     public SuperRestInterface() {
+
     	logger.info("Setting up REST API");	
 
         Spark.get("api", (req,res) -> new API()                                                                    );
 
+    	Spark.staticFiles.location("webcontent");
+        
+    	File extContent = new File(System.getProperty("java.io.tmpdir")+"/extContent");
+    	if (!extContent.exists()) extContent.mkdir();
+    	Spark.staticFiles.externalLocation(System.getProperty("java.io.tmpdir")+"/extContent");
+   
         // AuthService singleton to enable security features on REST endpoints
         final AuthService authService = new AuthService();
 
@@ -82,18 +90,18 @@ Spark.get(Messages.getString("SuperRestInterface.HelloWorldURL"), (req, res) -> 
         EnvironmentContextRESTInterface.setupEnvironmentContextRESTInterface(new EnvironmentContextRequestHandler(), authService);
         EquipmentContextRESTInterface.setupEquipmentContextRESTInterface(new EquipmentContextRequestHandler(), authService);
         ListingRESTInterface.setupListingRESTInterface(new ListingRequestHandler());
-        ResourceDescriptionRESTInterface.setupResourceDescriptionRESTInterface(new ResourceDescriptionRequestHandler(), authService);
-        ResourceManagerRESTInterface.setupResourceManagerRESTInterface();
+                
+ResourceDescriptionRESTInterface.setupResourceDescriptionRESTInterface(new ResourceDescriptionRequestHandler(), authService);
+        
         ResourceRESTInterface.setupResourceRESTInterface(new ResourceRequestHandler());
         TaskContextRESTInterface.setupTaskContextRESTInterface(new TaskContextRequestHandler(), authService);
         UserContextRESTInterface.setupUserContextRESTInterface(new UserContextRequestHandler(), authService);
-
         logger.info("REST API successfully set up");
 
         // Test html interface found
         if(SuperRestInterface.TEST_ENVIRONMENT) {
             TestRESTInterface.setupTestRESTInterface();
-        }
+        }           
     }
 
 }
