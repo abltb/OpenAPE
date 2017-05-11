@@ -61,11 +61,11 @@ public class SuperRestInterface {
 
         Spark.get("api", (req,res) -> new API()                                                                    );
 
-    	Spark.staticFiles.location("webcontent");
+        //Spark.staticFiles.location("webcontent");
         
     	File extContent = new File(System.getProperty("java.io.tmpdir")+"/extContent");
     	if (!extContent.exists()) extContent.mkdir();
-    	Spark.staticFiles.externalLocation(System.getProperty("java.io.tmpdir")+"/extContent");
+    	//Spark.staticFiles.externalLocation(System.getProperty("java.io.tmpdir")+"/extContent");
    
         // AuthService singleton to enable security features on REST endpoints
         final AuthService authService = new AuthService();
