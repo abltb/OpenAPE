@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" 
+integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script src="openape.js" type="text/javascript"></script>
+
+<style type="text/css">
+.registerSection{
+	position:fixed;
+    top: 45%;
+    left: 50%;
+    width:30em;
+    margin-top: -9em; /*set to a negative number 1/2 of your height*/
+    margin-left: -15em; /*set to a negative number 1/2 of your width*/
+}
+
+.registerContent {
+	border: 1px solid #ccc;
+    background-color: #f3f3f3;
+}
+
+table {
+  border-collapse:separate;
+  border-spacing:55px 20px;
+}
+
+font {
+	color: #2B669A;
+	font-size: 28pt;
+	font-weight: bold;
+}€‹
+</style>
+
+<script>
+
+
+</script>
+</head>
+<body>
+	
+
+
+<div class="registerSection" id="registerSection">
+	<div class="registerHeader" id="registerHeader" align="center"><font>Register</font></div>
+	<br>
+	<div class="registerContent" id="registerContent">
+	<table>
+		<tr>
+			<td > Username: </td><td><input id="username" type="text"></td>
+		</tr>
+		<tr>
+			<td> Email: </td><td><input id="email" type="text"></td>
+		</tr>
+		<tr>
+			<td> Password: </td><td><input id="password" type="password"></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="right"><button id="register" class="btn btn-primary" > Register</button></td>
+		</tr>
+	</table>
+	</div>
+</div>
+</body>
+</html>
