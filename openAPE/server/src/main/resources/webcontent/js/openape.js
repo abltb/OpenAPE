@@ -2,9 +2,11 @@
 	
  function defineOpenape(){
     var objOpenape = {};
+    var protocol = location.protocol;
     //
     // FUNCTIONS FOR USER
     //
+    
     //this function is used to set the user in the mongo database with the given username, email and password
     objOpenape.setUser = function (username, email, password) {
    		var objUser = new Object();
@@ -61,10 +63,10 @@
 	        headers: {
 	            "Authorization": token,
 	        },
-	        url: "http://localhost:4567/profile",
+	        url: protocol+"/profile",
 	        dataType: "html",
 	        success: function(data, textStatus, jqXHR){
-	        	objUserProfile.userProfile = data;
+	        	objUserProfile = jQuery.parseJSON(data);
 	        },
 	        error: function(jqXHR, textStatus, errorThrown){
 	          console.log(jqXHR, textStatus, errorThrown);
@@ -99,6 +101,29 @@
     	return objToken;
     }
     
+    objOpenape.setUserContexts = function (userContexts, token) {
+    	var objSetUserContext_Result = {};
+    	$.ajax({
+    	        type: 'POST',
+    	        async: false,
+    	        contentType: 'application/json',
+    	        headers: {
+    	        	 "Authorization": token,
+    	        },
+    	        url: protocol+"/api/user-contexts",
+    	        data: userContexts,
+    	        success: function(data, textStatus, jqXHR){
+    	        	objSetUserContext_Result.statusText = jqXHR.statusText;
+    	        	objSetUserContext_Result.userContextId = data;
+    	        },
+    	        error: function(jqXHR, textStatus, errorThrown){
+    	           console.log(jqXHR, textStatus, errorThrown);
+    	      }
+    	 });
+    	
+    	return objSetUserContext_Result;
+    }
+ 
     
     function sendUserData(user){
     	 var status = true;
@@ -106,7 +131,7 @@
     	        type: 'POST',
     	        async: false,
     	        contentType: 'json',
-    	        url: "http://localhost:4567/users",
+    	        url: protocol+"/users",
     	        dataType: "html",
     	        data: JSON.stringify(user),
     	        success: function(data, textStatus, jqXHR){

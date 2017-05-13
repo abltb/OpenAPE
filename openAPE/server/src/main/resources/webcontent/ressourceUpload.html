@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script src="js/openape.js" type="text/javascript"></script>
+<script src="js/start.js" type="text/javascript"></script>
+<link rel="stylesheet" href="css/style.css">
+
+<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>openAPE</title>
+    <script type="application/javascript">
+
+        var serveraddress = "http://localhost:4567/";
+		var sampleUserContext = '{"contexts":{"default":{"name":"Default preferences","preferences":{"http://registry.gpii.net/common/magnifierEnabled":"false","http://registry.gpii.net/applications/org.chrome.cloud4chrome/invertColours":"false"}},"dark":{"conditions":[{"type":"and","operands":[{"type":"ge","operands":["http://registry.gpii.net/common/env/visual.luminance","0"]},{"type":"le","operands":["http://registry.gpii.net/common/env/visual.luminance","200"]}]}],"name":"little environmental light","preferences":{"http://registry.gpii.net/common/magnifierEnabled":"true","http://registry.gpii.net/common/magnification":"2"}}}}';
+		var id;
+		
+		function loadPage() {
+			document.getElementById("dataInput").value = sampleUserContext;
+	        console.log(openape.setUserContexts(document.getElementById("dataInput").value, "eyJhbGciOiJIUzI1NiJ9.eyIkaW50X3Blcm1zIjpbXSwic3ViIjoib3JnLnBhYzRqLmNvcmUucHJvZmlsZS5Db21tb25Qcm9maWxlIzU5MTYxYzMzYjFkZWY4MmMwODc1YjgzMSIsIiRpbnRfcm9sZXMiOlsiYWRtaW4iXSwiZW1haWwiOiJ3amF1Zm1hbm5AZ214LmRlIiwidXNlcm5hbWUiOiJhZG1pbiJ9.7iuKIBEtROwUXacSA-ia65dQX1R-w_s67dD9tEb_4R8"));
+		}
+		
+
+		
+		function loadData() {
+            var req = new XMLHttpRequest();
+            req.open("GET", serveraddress + "api/user-contexts" + "/" + id, true);
+            req.send();
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+					document.getElementById("loadStatus").value = req.status;
+					console.log(req.response);
+                }
+            }
+        }
+		
+		function updateData() {
+			var data = document.getElementById("dataInput").value;
+        	var selectedAddress = document.querySelector('input[name="dataType"]:checked').value;
+            var req = new XMLHttpRequest();
+            req.open("PUT", serveraddress + selectedAddress + "/" + id, true);
+            req.setRequestHeader("Content-Type", "application/json");
+            req.send(data);
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+					document.getElementById("updateStatus").value = req.status;
+					console.log(req.response);
+                }
+            }
+        }
+		
+		function deleteData() {
+        	var selectedAddress = document.querySelector('input[name="dataType"]:checked').value;
+            var req = new XMLHttpRequest();
+            req.open("DELETE", serveraddress + selectedAddress + "/" + id, true);
+            req.send();
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+					document.getElementById("deleteStatus").value = req.status;
+					console.log(req.response);
+                }
+            }
+        }
+
+		
+		function loadRes() {
+            var req = new XMLHttpRequest();
+            var resourceName = document.getElementById("resourceName").value;
+            req.open("GET", serveraddress + "api/resources" + "/" + resourceName, true);
+            req.send();
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+					document.getElementById("resLoadStatus").value = req.status;
+					console.log(req.response);
+                }
+            }
+        }
+		
+		function deleteRes() {
+            var req = new XMLHttpRequest();
+            var resourceName = document.getElementById("resourceName").value;
+            req.open("DELETE", serveraddress + "api/resources" + "/" + resourceName, true);
+            req.send();
+            req.onreadystatechange = function () {
+                if (req.readyState == 4) {
+					document.getElementById("resDeleteStatus").value = req.status;
+					console.log(req.response);
+                }
+            }
+        }
+
+</script>
+</head>
+<body onload="loadPage()">
+
+<div class="main">	
+	<div align="center"><h1><font>OpenAPE</font></h1></div><br>
+	<div class="tab">
+	  <button id="btnLogin" class="tablinks" onclick="openSection(event, 'User')">User</button>
+	  <button id="btnRegistration" class="tablinks" onclick="openSection(event, 'Logout')">Logout</button>
+	</div>
+	
+	
+	<div id="Login" class="tabcontent">	</div>
+	</div>
+
+<h2 style="text-align: center;">Data storage</h2>
+
+<div style="text-align: center;">
+<textarea id="dataInput" name="dataInput" cols="100" rows="8"></textarea> <br>
+</div><br>
+<table style="margin-left:auto; margin-right:auto;">
+	<tr>
+		<td><button type="button" id="saveData" onclick="saveData()">store data</button></td>
+		<td><label>Status:<input type="text" id="saveStatus"/></label></td>
+	</tr>
+	<tr>
+		<td><button type="button" id="loadData" onclick="loadData()">load data</button></td>
+		<td><label>Status:<input type="text" id="loadStatus"/></label></td>
+	</tr>
+	<tr>
+		<td><button type="button" id="updateData" onclick="updateData()">update data</button></td>
+		<td><label>Status:<input type="text" id="updateStatus"/></label></td>
+	</tr>
+	<tr>
+		<td><button type="button" id="deleteData" onclick="deleteData()">delete data</button></td>
+		<td><label>Status:<input type="text" id="deleteStatus"/></label></td>
+	</tr>
+</table>
+</body>
+</html>
