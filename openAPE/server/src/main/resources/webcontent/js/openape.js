@@ -5,7 +5,6 @@
     //
     // FUNCTIONS FOR USER
     //
-    
     //this function is used to set the user in the mongo database with the given username, email and password
     objOpenape.setUser = function (username, email, password) {
    		var objUser = new Object();
