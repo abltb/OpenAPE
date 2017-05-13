@@ -2,7 +2,11 @@
 	
  function defineOpenape(){
     var objOpenape = {};
-
+    //
+    // FUNCTIONS FOR USER
+    //
+    
+    //this function is used to set the user in the mongo database with the given username, email and password
     objOpenape.setUser = function (username, email, password) {
    		var objUser = new Object();
    		var arrRoles = [];
@@ -49,8 +53,54 @@
    		}
     }
     
+    objOpenape.getUser = function (token) {
+    	var objUserProfile = {};
+    	$.ajax({
+	        type: 'GET',
+	        async: false,
+	        contentType: 'json',
+	        headers: {
+	            "Authorization": token,
+	        },
+	        url: "http://localhost:4567/profile",
+	        dataType: "html",
+	        success: function(data, textStatus, jqXHR){
+	        	objUserProfile.userProfile = data;
+	        },
+	        error: function(jqXHR, textStatus, errorThrown){
+	          console.log(jqXHR, textStatus, errorThrown);
+	        }
+    	});
+    	return objUserProfile;
+    }
     
-
+    /*
+    * TOKEN FUNCTIONS
+    */
+  
+    /*
+    * This function is used to get the user token by the given grant_type, username and password 
+    */
+    objOpenape.getToken = function (grant_type, username, password) {
+    	var objToken = {};
+    	$.ajax({
+    	        type: 'POST',
+    	        async: false,
+    	        contentType: 'json',
+    	        url: "http://localhost:4567/token?grant_type="+grant_type+"&username="+username+"&password="+password,
+    	        dataType: "json",
+    	        success: function(data, textStatus, jqXHR){
+    	        	objToken = data;
+    	        },
+    	        error: function(jqXHR, textStatus, errorThrown){
+    	           console.log(jqXHR, textStatus, errorThrown);
+    	      }
+    	 });
+    	
+    	return objToken;
+    }
+    
+    
     function sendUserData(user){
     	 var status = true;
     	 $.ajax({
@@ -63,7 +113,6 @@
     	        success: function(data, textStatus, jqXHR){
     				localStorage.setItem("token", data.substring(17, 41));
     				status =  true;
-
     	        },
     	        error: function(jqXHR, textStatus, errorThrown){
     	           status = false;
