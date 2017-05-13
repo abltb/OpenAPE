@@ -67,7 +67,11 @@
     	        },
     	        error: function(jqXHR, textStatus, errorThrown){
     	           status = false;
-    	           console.log(jqXHR, textStatus, errorThrown);
+    	           if(jqXHR.responseText.includes("username_1 dup key")==true){
+    		       	  alert("User with this username already exists");
+    		       } else  if(jqXHR.responseText.includes("email_1 dup key")==true){
+    		          alert("User with this email already exists");
+    		       }
     	        }
     	  });
     	 return status;
