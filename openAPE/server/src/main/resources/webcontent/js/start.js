@@ -17,7 +17,7 @@ function setUserData(){
 	
 	if(regSecurityQuestion == 15){
 		if(openape.setUser(username, email, password)==true){
-			window.location = "http://localhost:4567/restTests.html";
+			window.location = "http://localhost:4567/ressourceUpload.html";
 		}
 	} else {
 		alert("Wrong security question answer!");
@@ -49,13 +49,15 @@ function openSection(evt, sectionName) {
 function getTokenForLogin(){
 	var username = $("#username").val();
 	var password = $("#password").val();
-	var token = openape.getToken("password", username, password).access_token;
+	var token = openape.getToken("password", username, password).token;
+	
+	localStorage.setItem("token", token);
 	var userID = openape.getUser(token).id;
 	var securityQuestion = $("#securityQuestion").val();
 	
 	if(securityQuestion == 15){
 		if(userID != undefined){
-			window.location = "http://localhost:4567/restTests.html";
+			window.location = "http://localhost:4567/ressourceUpload.html";
 		} else {
 			alert("user not found");
 		}

@@ -87,11 +87,11 @@
     	$.ajax({
     	        type: 'POST',
     	        async: false,
-    	        contentType: 'json',
-    	        url: "http://localhost:4567/token?grant_type="+grant_type+"&username="+username+"&password="+password,
-    	        dataType: "json",
+    	        url: "http://localhost:4567/token?grant_type=password&username=admin&password=12345",
+    	        dataType: "html",
     	        success: function(data, textStatus, jqXHR){
-    	        	objToken = data;
+    	        	objToken.token = data;
+    	        	objToken.stauts = textStatus;
     	        },
     	        error: function(jqXHR, textStatus, errorThrown){
     	           console.log(jqXHR, textStatus, errorThrown);
@@ -99,6 +99,28 @@
     	 });
     	
     	return objToken;
+    }
+    
+    
+    objOpenape.getUserContexts = function (token, userContextId) {
+    	var objGetUserContext_Result = {};
+    	$.ajax({
+    	        type: 'GET',
+    	        async: false,
+    	        contentType: 'application/json',
+    	        headers: {
+    	        	 "Authorization": token,
+    	        },
+    	        url: protocol+"/api/user-contexts/"+userContextId,
+    	        success: function(data, textStatus, jqXHR){
+    	        	objGetUserContext_Result = data;
+    	        },
+    	        error: function(jqXHR, textStatus, errorThrown){
+    	           console.log(jqXHR, textStatus, errorThrown);
+    	      }
+    	 });
+    	
+    	return objGetUserContext_Result;
     }
     
     objOpenape.setUserContexts = function (userContexts, token) {
@@ -123,7 +145,49 @@
     	
     	return objSetUserContext_Result;
     }
- 
+    
+    objOpenape.deleteUserContexts = function (token, userContextId) {
+    	var objDeleteUserContext_Result = {};
+    	$.ajax({
+    	        type: 'DELETE',
+    	        async: false,
+    	        contentType: 'application/json',
+    	        headers: {
+    	        	 "Authorization": token,
+    	        },
+    	        url: protocol+"/api/user-contexts/"+userContextId,
+    	        success: function(data, textStatus, jqXHR){
+    	        	objDeleteUserContext_Result = jqXHR;
+    	        },
+    	        error: function(jqXHR, textStatus, errorThrown){
+    	        	objDeleteUserContext_Result = jqXHR;
+    	      }
+    	 });
+    	
+    	return objDeleteUserContext_Result;
+    }
+
+    objOpenape.updateUserContexts = function (token, userContextId, userContexts) {
+    	var objUpdateUserContext_Result = {};
+    	$.ajax({
+    	        type: 'PUT',
+    	        async: false,
+    	        contentType: 'application/json',
+    	        headers: {
+    	        	 "Authorization": token,
+    	        },
+    	        url: protocol+"/api/user-contexts/"+userContextId,
+    	        data: userContexts,
+    	        success: function(data, textStatus, jqXHR){
+    	        	objUpdateUserContext_Result = jqXHR;
+    	        },
+    	        error: function(jqXHR, textStatus, errorThrown){
+    	        	objUpdateUserContext_Result = jqXHR;
+    	      }
+    	 });
+    	
+    	return objUpdateUserContext_Result;
+    }        
     
     function sendUserData(user){
     	 var status = true;

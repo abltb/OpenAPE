@@ -41,6 +41,9 @@ div.tab button {
     transition: 0.3s;
 }
 
+div.main {
+	margin: 0px 200px 50px 200px;
+}
 
 /* Change background color of buttons on hover */
 div.tab button:hover {
