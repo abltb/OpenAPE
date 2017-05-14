@@ -37,8 +37,6 @@ function updateData() {
 		$('#updateStatus').append("updated");
 	}
 	
-	console.log()
-	
 	if(objUpdateStatus.status == 400){
 		$('#updateStatus').empty();
 		$('#updateStatus').append("update failed");

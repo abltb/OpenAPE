@@ -67,6 +67,7 @@
 	        dataType: "html",
 	        success: function(data, textStatus, jqXHR){
 	        	objUserProfile = jQuery.parseJSON(data);
+	        	console.log(data);
 	        },
 	        error: function(jqXHR, textStatus, errorThrown){
 	          console.log(jqXHR, textStatus, errorThrown);

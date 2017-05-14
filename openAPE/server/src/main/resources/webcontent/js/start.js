@@ -49,13 +49,15 @@ function openSection(evt, sectionName) {
 function getTokenForLogin(){
 	var username = $("#username").val();
 	var password = $("#password").val();
-	var token = openape.getToken("password", username, password).token;
+	var token = jQuery.parseJSON(openape.getToken("password", username, password).token).access_token;
 	
+	console.log(token);
 	localStorage.setItem("token", token);
 	var userID = openape.getUser(token).id;
+	console.log(userID);
 	var securityQuestion = $("#securityQuestion").val();
 	
-	if(securityQuestion == 15){
+	if(securityQuestion == 15){	
 		if(userID != undefined){
 			window.location = "http://localhost:4567/ressourceUpload.html";
 		} else {
