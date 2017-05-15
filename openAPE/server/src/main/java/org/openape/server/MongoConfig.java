@@ -24,10 +24,12 @@ public class MongoConfig {
      */
     public static String getString(String key) {
         try {
-            logger.debug("looking for key\"" + key +"\" in " + BUNDLE_NAME);
-        	return MongoConfig.RESOURCE_BUNDLE.getString(key);
+        	String value = MongoConfig.RESOURCE_BUNDLE.getString(key);
+            logger.debug("looking for key\"" + key +"\" in " + BUNDLE_NAME + ", found value: "  + value);
+        	return value;
         } catch (final MissingResourceException | NullPointerException | ClassCastException e) {
-            return null;
+            logger.debug("no entry found for key: " + key);
+        	return null;
         }
     }
 

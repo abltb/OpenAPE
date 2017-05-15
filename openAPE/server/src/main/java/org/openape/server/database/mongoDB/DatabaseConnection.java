@@ -16,6 +16,8 @@ import org.openape.server.requestHandler.EnvironmentContextRequestHandler;
 import org.openape.server.requestHandler.EquipmentContextRequestHandler;
 import org.openape.server.requestHandler.TaskContextRequestHandler;
 import org.openape.server.requestHandler.UserContextRequestHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
@@ -35,6 +37,8 @@ import com.mongodb.client.MongoDatabase;
  * {@link UserContextRequestHandler}.
  */
 public class DatabaseConnection {
+	
+	Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
     /**
      * The url to our mongo database server.
      */
@@ -146,10 +150,13 @@ public class DatabaseConnection {
         }
         final String port = MongoConfig.getString("databasePort");//$NON-NLS-1$
         if (port != null && !port.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
+        	logger.debug("Using MongoDB port " + port + " defined in mongo.properties" );
             DatabaseConnection.DATABASEPORT = port;
         } else {
-            DatabaseConnection.DATABASEPORT = Messages
-                    .getString("DatabaseConnection.MongoDBServerPort"); //$NON-NLS-1$
+        	String standardPort = Messages
+            .getString("DatabaseConnection.MongoDBServerPort"); //$NON-NLS-1$
+        	logger.debug("Using MongoDB port " + standardPort + " defined in Messages.properties"); 
+        	DatabaseConnection.DATABASEPORT = standardPort;
         }
         final String password = MongoConfig.getString("databasePassword");//$NON-NLS-1$
         if (password != null

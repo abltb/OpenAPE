@@ -12,6 +12,8 @@ Logger logger = LoggerFactory.getLogger(Init.class);
     @Override
     public void init() {
     	logger.info("Initialising openAPE");
+    	logger.debug("Working directory: " +             System.getProperty("user.dir"));
+    	
 //    	start database connection for testing purposes
     	DatabaseConnection.getInstance();
     	
