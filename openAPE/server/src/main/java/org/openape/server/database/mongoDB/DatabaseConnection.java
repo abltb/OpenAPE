@@ -133,7 +133,42 @@ public class DatabaseConnection {
      */
     private DatabaseConnection() {
         // import configuration file
-        final String name = MongoConfig.getString("databaseName");//$NON-NLS-1$
+    	readConfigFile();
+        
+//    	Create credentials for the openAPE database
+        final MongoCredential credential = MongoCredential.createCredential(
+                DatabaseConnection.DATABASEUSERNAME, DatabaseConnection.DATABASENAME,
+                DatabaseConnection.DATABASEPASSWORD.toCharArray());
+
+
+        // Create database client for the openAPE database
+        this.mongoClient = new MongoClient(new ServerAddress(DatabaseConnection.DATABASEURL,
+                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential));
+
+        // Get a reference to the openAPE database.
+        this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
+        // Get references to the database collections.
+        this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
+                .toString());
+        this.environmentContextCollection = this.database
+                .getCollection(MongoCollectionTypes.ENVIRONMENTCONTEXT.toString());
+        this.equipmentContextCollection = this.database
+                .getCollection(MongoCollectionTypes.EQUIPMENTCONTEXT.toString());
+        this.taskContextCollection = this.database.getCollection(MongoCollectionTypes.TASKCONTEXT
+                .toString());
+        this.resourceDescriptionContectCollection = this.database
+                .getCollection(MongoCollectionTypes.RESOURCEDESCRIPTION.toString());
+        this.listingContextCollection = this.database.getCollection(MongoCollectionTypes.LISTING
+                .toString());
+        this.resourceMimeTypesCollection = this.database
+                .getCollection(MongoCollectionTypes.RESOURCEMIMETYPES.toString());
+        this.userCollection = this.database
+                .getCollection(MongoCollectionTypes.USERS.toString());
+
+    }
+
+    private void readConfigFile() {
+    	final String name = MongoConfig.getString("databaseName");//$NON-NLS-1$
         if (name != null && !name.equals(Messages.getString("DatabaseConnection.EmptyString"))) {//$NON-NLS-1$
             DatabaseConnection.DATABASENAME = name;
         } else {
@@ -174,38 +209,10 @@ public class DatabaseConnection {
             DatabaseConnection.DATABASEUSERNAME = Messages
                     .getString("DatabaseConnection.MongoDBDatabaseUsername"); //$NON-NLS-1$
         }
-        // Create credentials for the openAPE database
-        final MongoCredential credential = MongoCredential.createCredential(
-                DatabaseConnection.DATABASEUSERNAME, DatabaseConnection.DATABASENAME,
-                DatabaseConnection.DATABASEPASSWORD.toCharArray());
+         		
+	}
 
-        // Create database client for the openAPE database
-        this.mongoClient = new MongoClient(new ServerAddress(DatabaseConnection.DATABASEURL,
-                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential));
-
-        // Get a reference to the openAPE database.
-        this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
-        // Get references to the database collections.
-        this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
-                .toString());
-        this.environmentContextCollection = this.database
-                .getCollection(MongoCollectionTypes.ENVIRONMENTCONTEXT.toString());
-        this.equipmentContextCollection = this.database
-                .getCollection(MongoCollectionTypes.EQUIPMENTCONTEXT.toString());
-        this.taskContextCollection = this.database.getCollection(MongoCollectionTypes.TASKCONTEXT
-                .toString());
-        this.resourceDescriptionContectCollection = this.database
-                .getCollection(MongoCollectionTypes.RESOURCEDESCRIPTION.toString());
-        this.listingContextCollection = this.database.getCollection(MongoCollectionTypes.LISTING
-                .toString());
-        this.resourceMimeTypesCollection = this.database
-                .getCollection(MongoCollectionTypes.RESOURCEMIMETYPES.toString());
-        this.userCollection = this.database
-                .getCollection(MongoCollectionTypes.USERS.toString());
-
-    }
-
-    /**
+	/**
      * Delete a database object, either a context or a resource, from the
      * database. Choose the object via id and the collection via the collection
      * type.
