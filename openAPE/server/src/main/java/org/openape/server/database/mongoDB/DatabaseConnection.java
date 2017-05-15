@@ -5,6 +5,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.ServerMonitorListener;
+
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.json.JsonParseException;
@@ -22,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
@@ -36,9 +42,9 @@ import com.mongodb.client.MongoDatabase;
  * {@link EquipmentContextRequestHandler}, {@link TaskContextRequestHandler},
  * {@link UserContextRequestHandler}.
  */
-public class DatabaseConnection {
+public class DatabaseConnection implements ServerMonitorListener {
 	
-	Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
+	static Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
     /**
      * The url to our mongo database server.
      */
@@ -80,8 +86,11 @@ public class DatabaseConnection {
      */
     public static DatabaseConnection getInstance() {
         if (DatabaseConnection.databaseConnectionInstance == null) {
+        	logger.info("new database connection required");
             DatabaseConnection.databaseConnectionInstance = new DatabaseConnection();
-        }
+        } else {
+    	logger.info("Found existing database connection.");
+    }
         return DatabaseConnection.databaseConnectionInstance;
     }
 
@@ -134,22 +143,36 @@ public class DatabaseConnection {
     private DatabaseConnection() {
         // import configuration file
     	readConfigFile();
-        
+     try {   
 //    	Create credentials for the openAPE database
         final MongoCredential credential = MongoCredential.createCredential(
                 DatabaseConnection.DATABASEUSERNAME, DatabaseConnection.DATABASENAME,
                 DatabaseConnection.DATABASEPASSWORD.toCharArray());
 
-
+//Add MongoDB Monitor with client options
+        MongoClientOptions clientOptions = new MongoClientOptions.Builder()
+                .addServerMonitorListener(this)
+                .build();
+        
         // Create database client for the openAPE database
         this.mongoClient = new MongoClient(new ServerAddress(DatabaseConnection.DATABASEURL,
-                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential));
-
+                Integer.parseInt(DatabaseConnection.DATABASEPORT)), Arrays.asList(credential), clientOptions);
+        
         // Get a reference to the openAPE database.
         this.database = this.mongoClient.getDatabase(DatabaseConnection.DATABASENAME);
+        logger.info("Found openAPE dataBase");
+    } catch(Exception e){
+    	logger.error("Failed to connect to the openAPE database");
+    	return;
+    }
+        
         // Get references to the database collections.
+     try{
         this.userContextCollection = this.database.getCollection(MongoCollectionTypes.USERCONTEXT
                 .toString());
+     } catch (Exception e){
+    	 logger.error("Couldn't find collection \"" + MongoCollectionTypes.USERCONTEXT + "\"");
+     }
         this.environmentContextCollection = this.database
                 .getCollection(MongoCollectionTypes.ENVIRONMENTCONTEXT.toString());
         this.equipmentContextCollection = this.database
@@ -619,5 +642,23 @@ public class DatabaseConnection {
         // Make sure username is unique for all users
         this.userCollection.createIndex(new BasicDBObject("username", 1), new IndexOptions().unique(true));
     }
+
+	@Override
+	public void serverHearbeatStarted(ServerHeartbeatStartedEvent event) {
+				logger.info("Found new heartbeat with connection ID: " + event.getConnectionId() );
+		
+	}
+
+	@Override
+	public void serverHeartbeatSucceeded(ServerHeartbeatSucceededEvent event) {
+		logger.info("Found heartbeat with connection ID: " + event.getConnectionId() );
+		
+	}
+
+	@Override
+	public void serverHeartbeatFailed(ServerHeartbeatFailedEvent event) {
+		
+		logger.error("Connecting to MongoDB at " + this.DATABASEURL + ":" + this.DATABASEPORT + ".\n" + event);
+			}
 
 }
