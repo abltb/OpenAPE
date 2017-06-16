@@ -1,0 +1,17 @@
+{
+    "contexts": {
+        "Argus": {
+            "name": "Argus preferences",
+            "preferences": {
+                "http://registry.gpii.net/pocket-code/large-textSize": "false",
+                "http://registry.gpii.net/pocket-code/large-elementSpacing": "false",
+                "http://registry.gpii.net/pocket-code/high-contrast": "true",
+                "http://registry.gpii.net/pocket-code/large-icons": "false",
+                "http://registry.gpii.net/pocket-code/additional-icons": "true",
+                "http://registry.gpii.net/pocket-code/fondType": "default",
+                "http://registry.gpii.net/pocket-code/starterBricks": "false",
+                "http://registry.gpii.net/pocket-code/dragndrop-delay": "false"
+            }
+        }      
+    }
+}
