@@ -26,8 +26,9 @@ public void testWriting() throws JsonParseException, JsonMappingException, IOExc
 	String str = new Gson().toJson(uc1);
 	FileWriter fw = new FileWriter("src/test/resources/toWrite.json");
 fw.write(str);;
-UserContext uc2 = mapper.readValue(new File("src/test/resources/toWrite.json"), UserContext.class);
 fw.close();
+
+UserContext uc2 = mapper.readValue(new File("src/test/resources/toWrite.json"), UserContext.class);
 }
 }
 
